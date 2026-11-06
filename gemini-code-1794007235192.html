@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanControl - Acesso por Permissões & Login Google</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js para os Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf.js para Exportar em PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- TELA 1: LOGIN COM CONTA GOOGLE -->
+    <div id="screen-login" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-8 space-y-6 shadow-2xl text-center">
+            <div class="inline-flex bg-brand-600 text-white p-3.5 rounded-2xl mb-1 shadow-lg shadow-brand-600/30">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-white">FinanControl</h1>
+                <p class="text-xs text-slate-400 mt-1">Gestão Segura de Dívidas & Controle de Acessos</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-700/50 text-left text-xs text-slate-300 space-y-2">
+                <p class="font-semibold text-brand-400 flex items-center gap-1.5">
+                    <i data-lucide="lock" class="w-4 h-4"></i> Níveis de Acesso
+                </p>
+                <p>• <strong>Administrador:</strong> Visualiza, edita e consolida dívidas de todos os membros.</p>
+                <p>• <strong>Usuário Comum:</strong> Acessa exclusivamente as suas próprias dívidas.</p>
+            </div>
+
+            <button onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all active:scale-[0.99] text-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                Entrar com Conta do Google
+            </button>
+        </div>
+    </div>
+
+    <!-- TELA 2: PAINEL PRINCIPAL (APP) -->
+    <div id="screen-app" class="hidden min-h-screen flex flex-col">
+        
+        <!-- HEADER SUPERIOR -->
+        <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchNavTab('home')">
+                    <div class="bg-brand-600 p-2 rounded-xl text-white shadow-lg shadow-brand-600/30">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base text-white leading-tight">FinanControl</h1>
+                        <span id="user-role-badge" class="text-[11px] font-semibold text-brand-400">Autenticado</span>
+                    </div>
+                </div>
+
+                <nav class="hidden sm:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/50">
+                    <button onclick="switchNavTab('home')" id="tab-btn-home" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-600 text-white shadow">
+                        Visão Geral
+                    </button>
+                    <button onclick="switchNavTab('reports')" id="tab-btn-reports" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                        Relatórios & Gráficos
+                    </button>
+                </nav>
+
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-700/50 text-xs">
+                        <img id="user-photo" src="" class="w-5 h-5 rounded-full hidden" alt="Foto">
+                        <span id="logged-user-name" class="font-semibold text-slate-200"></span>
+                    </div>
+                    <button onclick="toggleModalNewDebt(true)" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-brand-600/20">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        Nova Dívida
+                    </button>
+                    <button onclick="handleLogout()" class="text-xs text-rose-400 hover:bg-rose-950/40 px-2.5 py-2 rounded-xl border border-rose-800/50" title="Sair">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTAINER DA APLICAÇÃO -->
+        <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+
+            <!-- NOTIFICAÇÃO TOAST -->
+            <div id="toast-success" class="hidden fixed top-16 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-emerald-400">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                <span id="toast-message" class="text-xs font-bold">Operação realizada com sucesso!</span>
+            </div>
+
+            <!-- TELA 1: VISÃO GERAL (HOME) -->
+            <section id="view-home" class="space-y-6">
+                
+                <!-- CARD DE BOAS-VINDAS & FRASE MOTIVACIONAL -->
+                <div class="bg-gradient-to-r from-slate-800 via-slate-800 to-brand-950/40 border border-slate-700/80 p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                    <div class="relative z-10 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30 inline-flex items-center gap-1">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Gestão Financeira Inteligente
+                            </span>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-white">
+                            Olá, <span id="welcome-user-name" class="text-brand-400">Bem-vindo(a)</span>! 👋
+                        </h2>
+                        <p id="welcome-quote" class="text-xs md:text-sm text-slate-300 italic max-w-2xl">
+                            "O segredo da tranquilidade financeira não é ganhar mais, mas administrar bem cada passo do seu planejamento."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- SELETOR DE PERFIL PARA ADMINISTRADOR -->
+                <div id="admin-filter-bar" class="hidden bg-slate-800/80 border border-slate-700 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield" class="w-4 h-4 text-brand-400"></i>
+                        <span class="text-xs font-bold text-slate-300">Painel do Administrador (Filtrar por Usuário):</span>
+                    </div>
+                    <select id="admin-user-selector" onchange="handleAdminFilterChange(this.value)" class="p-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-brand-400 outline-none">
+                        <option value="ALL">🌐 Ver Todas as Dívidas de Todos</option>
+                    </select>
+                </div>
+
+                <!-- CARDS DE RESUMO -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">Total em Aberto</span>
+                        <p id="stat-total-pending" class="text-2xl font-bold text-rose-400">R$ 0,00</p>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">Total Quitado</span>
+                        <p id="stat-total-paid" class="text-2xl font-bold text-emerald-400">R$ 0,00</p>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">Total de Contas</span>
+                        <p id="stat-total-count" class="text-2xl font-bold text-slate-100">0</p>
+                    </div>
+                </div>
+
+                <!-- DÍVIDAS EM ANDAMENTO -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-lg text-white flex items-center gap-2">
+                            <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+                            Dívidas em Andamento
+                        </h2>
+                        <span id="count-pending" class="text-xs font-semibold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">0</span>
+                    </div>
+                    <div id="grid-pending-debts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+
+                <!-- DÍVIDAS QUITADAS -->
+                <div class="space-y-4 pt-6 border-t border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-lg text-white flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+                            Dívidas Quitadas
+                        </h2>
+                        <span id="count-paid" class="text-xs font-semibold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">0</span>
+                    </div>
+                    <div id="grid-paid-debts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </section>
+
+            <!-- TELA 2: CENTRAL DE RELATÓRIOS & GRÁFICOS -->
+            <section id="view-reports" class="hidden space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Central de Relatórios & Análises</h2>
+                        <p class="text-xs text-slate-400 mt-1">Filtre por período, categorias ou responsáveis e exporte dados com precisão.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportReportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i> Excel (CSV)
+                        </button>
+                        <button onclick="exportReportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+                            <i data-lucide="file-text" class="w-4 h-4"></i> Exportar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FILTROS -->
+                <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Status da Dívida</label>
+                        <select id="rep-filter-status" onchange="updateReportsView()" class="w-full p-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white outline-none">
+                            <option value="ALL">Todas as Dívidas</option>
+                            <option value="PENDING">Apenas Pendentes</option>
+                            <option value="PAID">Apenas Quitadas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Categoria</label>
+                        <select id="rep-filter-category" onchange="updateReportsView()" class="w-full p-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white outline-none">
+                            <option value="ALL">Todas as Categorias</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Empréstimo">Empréstimo</option>
+                            <option value="Financiamento">Financiamento</option>
+                            <option value="Contas Fixas">Contas Fixas</option>
+                            <option value="Dinheiro Emprestado">Dinheiro Emprestado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Data Inicial (Vencimento)</label>
+                        <input type="date" id="rep-filter-start-date" onchange="updateReportsView()" class="w-full p-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Data Final (Vencimento)</label>
+                        <input type="date" id="rep-filter-end-date" onchange="updateReportsView()" class="w-full p-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white outline-none">
+                    </div>
+                </div>
+
+                <!-- ÁREA IMPRESSÃO / PDF -->
+                <div id="pdf-report-area" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl space-y-3">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                                <i data-lucide="pie-chart" class="w-4 h-4 text-brand-400"></i> Por Categoria (R$)
+                            </h3>
+                            <div class="h-56 relative flex items-center justify-center">
+                                <canvas id="chart-category"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl space-y-3">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i> Pago vs. Pendente
+                            </h3>
+                            <div class="h-56 relative flex items-center justify-center">
+                                <canvas id="chart-status"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl space-y-3 col-span-1 md:col-span-2 lg:col-span-1">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                                <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-400"></i> Maiores Dívidas
+                            </h3>
+                            <div class="h-56 relative">
+                                <canvas id="chart-bar-debts"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABELA DETALHADA -->
+                    <div class="bg-slate-800/80 border border-slate-700 p-6 rounded-2xl space-y-4">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i data-lucide="list-tree" class="w-4 h-4 text-brand-400"></i> Detalhamento Consolidado das Dívidas
+                        </h3>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400">
+                                        <th class="py-3 px-2">Dívida / Credor</th>
+                                        <th class="py-3 px-2">Categoria</th>
+                                        <th class="py-3 px-2">Responsável</th>
+                                        <th class="py-3 px-2">Parcelas Pagas</th>
+                                        <th class="py-3 px-2">Valor Total</th>
+                                        <th class="py-3 px-2">Valor Pago</th>
+                                        <th class="py-3 px-2 text-right">Saldo Restante</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-table-body" class="divide-y divide-slate-700/50 text-xs">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TELA DETALHE DA DÍVIDA SELECIONADA -->
+            <section id="view-detail" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="switchNavTab('home')" class="text-xs text-brand-500 hover:underline flex items-center gap-1 font-semibold">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar para a Tela Inicial
+                    </button>
+                </div>
+
+                <div id="detail-content" class="bg-slate-800/80 border border-slate-700 p-6 rounded-2xl space-y-6"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: NOVA DÍVIDA -->
+    <div id="modal-new-debt" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-brand-500"></i>
+                    Cadastrar Nova Dívida
+                </h3>
+                <button onclick="toggleModalNewDebt(false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="handleCreateDebt(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Dívida / Credor *</label>
+                    <input type="text" id="debt-name" required placeholder="Ex: Cartão Nubank, Financiamento..." class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Categoria *</label>
+                    <select id="debt-category" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                        <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+                        <option value="Empréstimo">🏦 Empréstimo</option>
+                        <option value="Financiamento">🚗 Financiamento</option>
+                        <option value="Contas Fixas">📄 Contas Fixas</option>
+                        <option value="Dinheiro Emprestado">🤝 Dinheiro Emprestado</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Valor Total (R$) *</label>
+                        <input type="number" step="0.01" id="debt-total" oninput="calculateInstallmentsPreview()" required placeholder="1200.00" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Qtd. de Parcelas *</label>
+                        <input type="number" id="debt-count" oninput="calculateInstallmentsPreview()" required min="1" max="240" value="12" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Valor por Parcela (Calculado)</label>
+                        <input type="number" step="0.01" id="debt-inst-value" required readonly class="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-emerald-400 font-bold text-sm outline-none cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">1º Vencimento *</label>
+                        <input type="date" id="debt-first-date" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- CAMPO ADMINISTRATIVO: VINCULAR A QUAL E-MAIL? -->
+                <div id="field-assign-email" class="hidden pt-2 border-t border-slate-700">
+                    <label class="block text-xs font-medium text-brand-400 mb-1">Atribuir Dívida ao E-mail (Admin):</label>
+                    <input type="email" id="debt-assign-email" placeholder="usuario@exemplo.com" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none">
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="toggleModalNewDebt(false)" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-medium">Cancelar</button>
+                    <button type="submit" id="btn-save-debt" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-lg shadow-brand-600/20">Salvar no Firestore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR PARCELA INDIVIDUAL -->
+    <div id="modal-edit-installment" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-4 h-4 text-brand-500"></i>
+                    Editar Parcela Individual
+                </h3>
+                <button onclick="toggleModalEditInstallment(false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form onsubmit="handleSaveInstallmentEdit(event)" class="space-y-3">
+                <input type="hidden" id="edit-debt-id">
+                <input type="hidden" id="edit-inst-index">
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Vencimento da Parcela *</label>
+                    <input type="date" id="edit-inst-date" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Valor da Parcela (R$) *</label>
+                    <input type="number" step="0.01" id="edit-inst-amount" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="toggleModalEditInstallment(false)" class="px-3 py-1.5 rounded-xl border border-slate-700 text-slate-300 text-xs">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-600 text-white text-xs font-bold">Salvar Parcela</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE SDK MODULAR (V10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { 
+            getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+        import { 
+            getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMxu8uksx9Ws0Ffmt5V2nBJ6KH1tZJn4U",
+            authDomain: "financontrol-dividas.firebaseapp.com",
+            projectId: "financontrol-dividas",
+            storageBucket: "financontrol-dividas.firebasestorage.app",
+            messagingSenderId: "379799971734",
+            appId: "1:379799971734:web:065910ec81f2eaaa1cdfb7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        const ADMIN_EMAILS = ["t.f.matheus96@gmail.com", "dayaneazevedo88@gmail.com"];
+
+        const WELCOME_QUOTES = [
+            '"O segredo da tranquilidade financeira é o planejamento diário."',
+            '"Domine as suas finanças antes que elas dominem você."',
+            '"Cada parcela quitada é um passo a mais rumo à liberdade financeira."',
+            '"Pequenas economias e acompanhamento constante geram grandes conquistas."'
+        ];
+
+        let currentUser = null;
+        let currentUserRole = "USER";
+        let debtsList = [];
+        let selectedAdminUserFilter = "ALL";
+        let currentDetailDebtId = null;
+
+        let chartCategoryInstance = null;
+        let chartStatusInstance = null;
+        let chartBarDebtsInstance = null;
+
+        // ESCUTAR ESTADO DE AUTENTICAÇÃO
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                const userEmail = user.email.toLowerCase();
+                currentUserRole = ADMIN_EMAILS.includes(userEmail) ? "ADMIN" : "USER";
+
+                const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Usuário';
+                document.getElementById('logged-user-name').innerText = user.displayName || user.email;
+                document.getElementById('welcome-user-name').innerText = firstName;
+                
+                // Escolhe frase motivacional aleatória
+                const randomQuote = WELCOME_QUOTES[Math.floor(Math.random() * WELCOME_QUOTES.length)];
+                document.getElementById('welcome-quote').innerText = randomQuote;
+
+                if (user.photoURL) {
+                    const img = document.getElementById('user-photo');
+                    img.src = user.photoURL;
+                    img.classList.remove('hidden');
+                }
+
+                document.getElementById('user-role-badge').innerText = currentUserRole === "ADMIN" ? "⚡ Administrador" : "🔒 Usuário Comum";
+
+                if (currentUserRole === "ADMIN") {
+                    document.getElementById('admin-filter-bar').classList.remove('hidden');
+                    document.getElementById('field-assign-email').classList.remove('hidden');
+                }
+
+                document.getElementById('screen-login').classList.add('hidden');
+                document.getElementById('screen-app').classList.remove('hidden');
+
+                document.getElementById('debt-first-date').value = new Date().toISOString().split('T')[0];
+                listenToFirestoreDebts();
+            } else {
+                currentUser = null;
+                document.getElementById('screen-app').classList.add('hidden');
+                document.getElementById('screen-login').classList.remove('hidden');
+            }
+        });
+
+        // LOGIN COM O GOOGLE
+        window.handleGoogleLogin = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (err) {
+                alert("Erro ao efetuar login com o Google: " + err.message);
+            }
+        };
+
+        window.handleLogout = function() { signOut(auth); };
+
+        // TROCAR NAVEGAÇÃO ENTRE HOME E RELATÓRIOS
+        window.switchNavTab = function(tabName) {
+            currentDetailDebtId = null;
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-reports').classList.add('hidden');
+            document.getElementById('view-detail').classList.add('hidden');
+
+            document.getElementById('tab-btn-home').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+            document.getElementById('tab-btn-reports').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+
+            if (tabName === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('tab-btn-home').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-600 text-white shadow";
+                renderDashboard();
+            } else if (tabName === 'reports') {
+                document.getElementById('view-reports').classList.remove('hidden');
+                document.getElementById('tab-btn-reports').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-600 text-white shadow";
+                updateReportsView();
+            }
+        };
+
+        // ESCUTAR DIVIDAS DO FIRESTORE EM TEMPO REAL
+        function listenToFirestoreDebts() {
+            onSnapshot(collection(db, "debts_tracker"), (snapshot) => {
+                debtsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                if (currentUserRole === "ADMIN") {
+                    updateAdminUserSelector();
+                }
+
+                renderDashboard();
+                if (currentDetailDebtId) renderDebtDetailScreen(currentDetailDebtId);
+            });
+        }
+
+        function updateAdminUserSelector() {
+            const selector = document.getElementById('admin-user-selector');
+            const emailsSet = new Set();
+            debtsList.forEach(d => {
+                if (d.createdBy) emailsSet.add(d.createdBy.toLowerCase());
+                if (d.allowedEmails) d.allowedEmails.forEach(e => emailsSet.add(e.toLowerCase()));
+            });
+
+            let optionsHtml = `<option value="ALL">🌐 Ver Todas as Dívidas de Todos</option>`;
+            emailsSet.forEach(e => {
+                optionsHtml += `<option value="${e}" ${selectedAdminUserFilter === e ? 'selected' : ''}>👤 ${e}</option>`;
+            });
+
+            selector.innerHTML = optionsHtml;
+        }
+
+        window.handleAdminFilterChange = function(val) {
+            selectedAdminUserFilter = val;
+            renderDashboard();
+        };
+
+        window.calculateInstallmentsPreview = function() {
+            const total = parseFloat(document.getElementById('debt-total').value) || 0;
+            const count = parseInt(document.getElementById('debt-count').value) || 1;
+            if (total > 0 && count > 0) {
+                document.getElementById('debt-inst-value').value = (total / count).toFixed(2);
+            } else {
+                document.getElementById('debt-inst-value').value = '';
+            }
+        };
+
+        window.handleCreateDebt = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-debt');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const name = document.getElementById('debt-name').value.trim();
+            const category = document.getElementById('debt-category').value;
+            const total = parseFloat(document.getElementById('debt-total').value);
+            const count = parseInt(document.getElementById('debt-count').value);
+            const startDateStr = document.getElementById('debt-first-date').value;
+            
+            const assignedEmailInput = document.getElementById('debt-assign-email').value.trim().toLowerCase();
+            const ownerEmail = assignedEmailInput || currentUser.email.toLowerCase();
+
+            const parts = startDateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+
+            const baseAmount = Math.floor((total / count) * 100) / 100;
+            const remainder = Math.round((total - (baseAmount * count)) * 100) / 100;
+
+            const installments = [];
+            for (let i = 0; i < count; i++) {
+                let y = year + Math.floor((month + i) / 12);
+                let m = (month + i) % 12;
+                let daysInM = new Date(y, m + 1, 0).getDate();
+                let actualDay = Math.min(day, daysInM);
+
+                let dateIso = `${y}-${String(m + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+                let instAmount = i === 0 ? Math.round((baseAmount + remainder) * 100) / 100 : baseAmount;
+
+                installments.push({
+                    number: i + 1,
+                    dueDate: dateIso,
+                    amount: instAmount,
+                    status: 'Pendente'
+                });
+            }
+
+            const newDebt = {
+                name: name,
+                category: category,
+                totalAmount: total,
+                installmentsCount: count,
+                installments: installments,
+                createdBy: currentUser.email.toLowerCase(),
+                allowedEmails: [ownerEmail],
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                const docRef = await addDoc(collection(db, "debts_tracker"), newDebt);
+                toggleModalNewDebt(false);
+                document.getElementById('debt-name').value = '';
+                document.getElementById('debt-total').value = '';
+                document.getElementById('debt-assign-email').value = '';
+
+                showToast(`Dívida "${name}" cadastrada com sucesso!`);
+                openDebtDetail(docRef.id);
+            } catch (err) {
+                alert("Erro ao salvar no Firestore: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Salvar no Firestore";
+            }
+        };
+
+        function getVisibleDebts() {
+            return debtsList.filter(d => {
+                const myEmail = currentUser.email.toLowerCase();
+                const allowed = d.allowedEmails || [d.createdBy];
+
+                if (currentUserRole !== "ADMIN") {
+                    return allowed.includes(myEmail) || d.createdBy === myEmail;
+                }
+
+                if (selectedAdminUserFilter !== "ALL") {
+                    return allowed.includes(selectedAdminUserFilter) || d.createdBy === selectedAdminUserFilter;
+                }
+
+                return true;
+            });
+        }
+
+        function renderDashboard() {
+            const pendingGrid = document.getElementById('grid-pending-debts');
+            const paidGrid = document.getElementById('grid-paid-debts');
+
+            let filteredDebts = getVisibleDebts();
+
+            let totalPendingVal = 0;
+            let totalPaidVal = 0;
+            let countPending = 0;
+            let countPaid = 0;
+
+            const pendingCards = [];
+            const paidCards = [];
+
+            filteredDebts.forEach(debt => {
+                const insts = debt.installments || [];
+                const dTotal = insts.reduce((a, b) => a + b.amount, 0);
+                const dPaid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
+                const dPending = dTotal - dPaid;
+                const paidCount = insts.filter(i => i.status === 'Pago').length;
+                const isComplete = dPending === 0 && insts.length > 0;
+
+                totalPendingVal += dPending;
+                totalPaidVal += dPaid;
+
+                if (isComplete) countPaid++; else countPending++;
+
+                const progressPct = insts.length > 0 ? Math.round((paidCount / insts.length) * 100) : 0;
+                const nextPending = insts.find(i => i.status === 'Pendente');
+                const ownerDisplay = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
+
+                const cardHtml = `
+                    <div onclick="openDebtDetail('${debt.id}')" class="bg-slate-800/80 border border-slate-700/70 hover:border-brand-500/80 p-5 rounded-2xl cursor-pointer transition-all space-y-4 group">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-700 text-slate-300">
+                                        ${debt.category}
+                                    </span>
+                                    ${currentUserRole === 'ADMIN' ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-950 text-brand-300 border border-brand-800">👤 ${ownerDisplay}</span>` : ''}
+                                </div>
+                                <h3 class="font-bold text-white text-base mt-1.5 group-hover:text-brand-400 transition-colors">${debt.name}</h3>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                                ${isComplete ? 'Quitada' : `${paidCount}/${insts.length} Pagas`}
+                            </span>
+                        </div>
+
+                        <div class="bg-slate-900/60 p-3 rounded-xl flex justify-between items-center text-xs border border-slate-700/40">
+                            <div>
+                                <span class="text-slate-400 block text-[11px]">Próximo Vencimento</span>
+                                <strong class="text-slate-200">${nextPending ? nextPending.dueDate.split('-').reverse().join('/') : 'Concluído'}</strong>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 block text-[11px]">Valor Parcela</span>
+                                <strong class="text-emerald-400 font-bold">${nextPending ? `R$ ${nextPending.amount.toFixed(2)}` : 'R$ 0,00'}</strong>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span>Progresso</span>
+                                <span class="font-bold text-slate-200">${progressPct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-700/60 h-2 rounded-full overflow-hidden">
+                                <div class="bg-brand-500 h-full rounded-full transition-all duration-300" style="width: ${progressPct}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between text-xs pt-2 border-t border-slate-700/50">
+                            <span class="text-slate-400">Restante: <strong class="text-rose-400">R$ ${dPending.toFixed(2)}</strong></span>
+                            <span class="text-slate-400">Total: <strong class="text-white">R$ ${dTotal.toFixed(2)}</strong></span>
+                        </div>
+                    </div>
+                `;
+
+                if (isComplete) paidCards.push(cardHtml); else pendingCards.push(cardHtml);
+            });
+
+            pendingGrid.innerHTML = pendingCards.join('') || `<div class="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-800/40 rounded-2xl border border-slate-700/50">Nenhuma dívida em andamento.</div>`;
+            paidGrid.innerHTML = paidCards.join('') || `<div class="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-800/40 rounded-2xl border border-slate-700/50">Nenhuma dívida quitada.</div>`;
+
+            document.getElementById('stat-total-pending').innerText = `R$ ${totalPendingVal.toFixed(2)}`;
+            document.getElementById('stat-total-paid').innerText = `R$ ${totalPaidVal.toFixed(2)}`;
+            document.getElementById('stat-total-count').innerText = filteredDebts.length;
+            document.getElementById('count-pending').innerText = countPending;
+            document.getElementById('count-paid').innerText = countPaid;
+
+            lucide.createIcons();
+        }
+
+        // LÓGICA DOS RELATÓRIOS E GRÁFICOS
+        window.updateReportsView = function() {
+            const statusFilter = document.getElementById('rep-filter-status').value;
+            const categoryFilter = document.getElementById('rep-filter-category').value;
+            const startDate = document.getElementById('rep-filter-start-date').value;
+            const endDate = document.getElementById('rep-filter-end-date').value;
+
+            let filtered = getVisibleDebts();
+
+            const categoriesMap = {};
+            let totalPaidVal = 0;
+            let totalPendingVal = 0;
+
+            const tableRows = [];
+            const barLabels = [];
+            const barDataPaid = [];
+            const barDataPending = [];
+
+            filtered.forEach(debt => {
+                if (categoryFilter !== 'ALL' && debt.category !== categoryFilter) return;
+
+                let insts = debt.installments || [];
+                if (startDate) insts = insts.filter(i => i.dueDate >= startDate);
+                if (endDate) insts = insts.filter(i => i.dueDate <= endDate);
+
+                if (insts.length === 0) return;
+
+                const dTotal = insts.reduce((a, b) => a + b.amount, 0);
+                const dPaid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
+                const dPending = dTotal - dPaid;
+                const isComplete = dPending === 0;
+
+                if (statusFilter === 'PENDING' && isComplete) return;
+                if (statusFilter === 'PAID' && !isComplete) return;
+
+                totalPaidVal += dPaid;
+                totalPendingVal += dPending;
+
+                categoriesMap[debt.category] = (categoriesMap[debt.category] || 0) + dTotal;
+
+                barLabels.push(debt.name);
+                barDataPaid.push(dPaid);
+                barDataPending.push(dPending);
+
+                const paidCount = insts.filter(i => i.status === 'Pago').length;
+                const ownerDisplay = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
+
+                tableRows.push(`
+                    <tr>
+                        <td class="py-3 px-2 font-bold text-slate-100">${debt.name}</td>
+                        <td class="py-3 px-2 font-semibold text-slate-400">${debt.category}</td>
+                        <td class="py-3 px-2 text-slate-400">${ownerDisplay}</td>
+                        <td class="py-3 px-2">${paidCount}/${insts.length} Pagas</td>
+                        <td class="py-3 px-2 font-semibold text-white">R$ ${dTotal.toFixed(2)}</td>
+                        <td class="py-3 px-2 font-bold text-emerald-400">R$ ${dPaid.toFixed(2)}</td>
+                        <td class="py-3 px-2 text-right font-bold text-rose-400">R$ ${dPending.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+
+            document.getElementById('report-table-body').innerHTML = tableRows.join('') || `
+                <tr><td colspan="7" class="py-4 text-center text-slate-500">Nenhum registro encontrado para estes filtros.</td></tr>
+            `;
+
+            renderReportCharts(categoriesMap, totalPaidVal, totalPendingVal, barLabels, barDataPaid, barDataPending);
+        };
+
+        function renderReportCharts(catMap, paid, pending, barLabels, barPaid, barPending) {
+            // Chart Categoria
+            const ctxCat = document.getElementById('chart-category');
+            if (ctxCat) {
+                if (chartCategoryInstance) chartCategoryInstance.destroy();
+                chartCategoryInstance = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(catMap),
+                        datasets: [{
+                            data: Object.values(catMap),
+                            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
+                });
+            }
+
+            // Chart Status
+            const ctxStatus = document.getElementById('chart-status');
+            if (ctxStatus) {
+                if (chartStatusInstance) chartStatusInstance.destroy();
+                chartStatusInstance = new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pago', 'Pendente'],
+                        datasets: [{
+                            data: [paid, pending],
+                            backgroundColor: ['#22c55e', '#f43f5e'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
+                });
+            }
+
+            // Chart Barras
+            const ctxBar = document.getElementById('chart-bar-debts');
+            if (ctxBar) {
+                if (chartBarDebtsInstance) chartBarDebtsInstance.destroy();
+                chartBarDebtsInstance = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: barLabels.slice(0, 10),
+                        datasets: [
+                            { label: 'Pago', data: barPaid.slice(0, 10), backgroundColor: '#22c55e' },
+                            { label: 'Pendente', data: barPending.slice(0, 10), backgroundColor: '#f43f5e' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { stacked: true, ticks: { color: '#94a3b8', font: { size: 9 } } } },
+                        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } }
+                    }
+                });
+            }
+        }
+
+        window.exportReportCSV = function() {
+            let csv = 'Credor/Conta;Categoria;Responsavel;Parcelas Pagas;Valor Total;Valor Pago;Saldo Pendente\n';
+            getVisibleDebts().forEach(debt => {
+                const total = (debt.installments || []).reduce((a, b) => a + b.amount, 0);
+                const paid = (debt.installments || []).filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
+                const ownerDisplay = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
+                const paidCount = (debt.installments || []).filter(i => i.status === 'Pago').length;
+                csv += `"${debt.name}";"${debt.category}";"${ownerDisplay}";"${paidCount}/${(debt.installments || []).length}";"${total.toFixed(2)}";"${paid.toFixed(2)}";"${(total - paid).toFixed(2)}"\n`;
+            });
+
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `FinanControl_Relatorio_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        };
+
+        window.exportReportPDF = function() {
+            const element = document.getElementById('pdf-report-area');
+            const opt = {
+                margin:       0.3,
+                filename:     `FinanControl_Relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        };
+
+        // DETALHES DA DÍVIDA
+        function renderDebtDetailScreen(id) {
+            const container = document.getElementById('detail-content');
+            const debt = debtsList.find(d => d.id === id);
+
+            if (!debt) return;
+
+            const insts = debt.installments || [];
+            const total = insts.reduce((a, b) => a + b.amount, 0);
+            const paid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
+            const remaining = total - paid;
+            const ownerDisplay = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
+
+            container.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-700 text-brand-400">${debt.category}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-700">Responsável: ${ownerDisplay}</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white mt-2">${debt.name}</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="deleteDebt('${debt.id}')" class="text-rose-400 hover:bg-rose-950/40 p-2 rounded-xl border border-rose-800/50 text-xs font-semibold flex items-center gap-1.5">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Dívida
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                        <span class="text-xs text-slate-400 block">Valor Total Ajustado</span>
+                        <strong class="text-xl text-white font-bold">R$ ${total.toFixed(2)}</strong>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                        <span class="text-xs text-slate-400 block">Valor Já Pago</span>
+                        <strong class="text-xl text-emerald-400 font-bold">R$ ${paid.toFixed(2)}</strong>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                        <span class="text-xs text-slate-400 block">Saldo Restante</span>
+                        <strong class="text-xl text-rose-400 font-bold">R$ ${remaining.toFixed(2)}</strong>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-white text-sm mb-3 flex items-center justify-between">
+                        <span>Parcelas (${insts.length})</span>
+                        <span class="text-xs text-slate-400 font-normal">Clique no lápis para alterar data/valor individualmente</span>
+                    </h3>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400">
+                                    <th class="py-3 px-2">Parcela</th>
+                                    <th class="py-3 px-2">Vencimento</th>
+                                    <th class="py-3 px-2">Valor</th>
+                                    <th class="py-3 px-2">Status</th>
+                                    <th class="py-3 px-2 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50 text-sm">
+                                ${insts.map((inst, idx) => `
+                                    <tr>
+                                        <td class="py-3 px-2 font-bold text-slate-200">${inst.number}ª Parcela</td>
+                                        <td class="py-3 px-2 text-slate-300 font-medium">${inst.dueDate.split('-').reverse().join('/')}</td>
+                                        <td class="py-3 px-2 font-semibold text-emerald-400">R$ ${inst.amount.toFixed(2)}</td>
+                                        <td class="py-3 px-2">
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${inst.status === 'Pago' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                                                ${inst.status}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-2 text-right flex items-center justify-end gap-2">
+                                            <button onclick="openModalEditInstallment('${debt.id}', ${idx})" class="p-1.5 rounded-lg bg-slate-700 text-slate-300 hover:text-white hover:bg-slate-600" title="Editar Data/Valor da Parcela">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                            <button onclick="toggleInstallmentStatus('${debt.id}', ${idx})" class="px-3 py-1.5 rounded-lg text-xs font-bold ${inst.status === 'Pago' ? 'bg-slate-700 text-slate-300' : 'bg-emerald-600 text-white'}">
+                                                ${inst.status === 'Pago' ? 'Marcar Pendente' : 'Marcar como Pago'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            lucide.createIcons();
+        }
+
+        window.toggleInstallmentStatus = async function(debtId, instIndex) {
+            const debt = debtsList.find(d => d.id === debtId);
+            if (!debt) return;
+
+            const insts = debt.installments;
+            insts[instIndex].status = insts[instIndex].status === 'Pago' ? 'Pendente' : 'Pago';
+
+            try {
+                await updateDoc(doc(db, "debts_tracker", debtId), {
+                    installments: insts,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                alert("Erro ao sincronizar parcela: " + err.message);
+            }
+        };
+
+        window.openModalEditInstallment = function(debtId, instIndex) {
+            const debt = debtsList.find(d => d.id === debtId);
+            if (!debt) return;
+
+            const inst = debt.installments[instIndex];
+            document.getElementById('edit-debt-id').value = debtId;
+            document.getElementById('edit-inst-index').value = instIndex;
+            document.getElementById('edit-inst-date').value = inst.dueDate;
+            document.getElementById('edit-inst-amount').value = inst.amount.toFixed(2);
+
+            toggleModalEditInstallment(true);
+        };
+
+        window.handleSaveInstallmentEdit = async function(e) {
+            e.preventDefault();
+            const debtId = document.getElementById('edit-debt-id').value;
+            const instIndex = parseInt(document.getElementById('edit-inst-index').value);
+            const newDate = document.getElementById('edit-inst-date').value;
+            const newAmount = parseFloat(document.getElementById('edit-inst-amount').value);
+
+            const debt = debtsList.find(d => d.id === debtId);
+            if (debt) {
+                const insts = debt.installments;
+                insts[instIndex].dueDate = newDate;
+                insts[instIndex].amount = newAmount;
+
+                const newTotal = insts.reduce((acc, item) => acc + item.amount, 0);
+
+                try {
+                    await updateDoc(doc(db, "debts_tracker", debtId), {
+                        installments: insts,
+                        totalAmount: newTotal,
+                        updatedAt: new Date().toISOString()
+                    });
+
+                    toggleModalEditInstallment(false);
+                    showToast("Parcela atualizada no banco!");
+                } catch (err) {
+                    alert("Erro ao atualizar parcela: " + err.message);
+                }
+            }
+        };
+
+        window.deleteDebt = async function(id) {
+            const debt = debtsList.find(d => d.id === id);
+            if (confirm(`Tem certeza que deseja excluir a dívida "${debt?.name}"?`)) {
+                try {
+                    await deleteDoc(doc(db, "debts_tracker", id));
+                    switchNavTab('home');
+                    showToast("Dívida excluída com sucesso!");
+                } catch (err) {
+                    alert("Erro ao excluir dívida: " + err.message);
+                }
+            }
+        };
+
+        window.openDebtDetail = function(id) {
+            currentDetailDebtId = id;
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-reports').classList.add('hidden');
+            document.getElementById('view-detail').classList.remove('hidden');
+            renderDebtDetailScreen(id);
+        };
+
+        window.showToast = function(msg) {
+            const toast = document.getElementById('toast-success');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+        };
+
+        window.toggleModalNewDebt = function(show) {
+            document.getElementById('modal-new-debt').classList.toggle('hidden', !show);
+        };
+
+        window.toggleModalEditInstallment = function(show) {
+            document.getElementById('modal-edit-installment').classList.toggle('hidden', !show);
+        };
+
+        window.onload = () => { lucide.createIcons(); };
+    </script>
+</body>
+</html>
