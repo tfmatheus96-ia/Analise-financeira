@@ -40,15 +40,14 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-white">FinanControl</h1>
-                <p class="text-xs text-slate-400 mt-1">Gestão Segura de Dívidas & Controle de Acessos</p>
+                <p class="text-xs text-slate-400 mt-1">Gestão Segura de Dívidas & Controle Restrito de Acessos</p>
             </div>
 
             <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-700/50 text-left text-xs text-slate-300 space-y-2">
                 <p class="font-semibold text-brand-400 flex items-center gap-1.5">
-                    <i data-lucide="lock" class="w-4 h-4"></i> Níveis de Acesso
+                    <i data-lucide="lock" class="w-4 h-4"></i> Acesso Restrito por Pré-Cadastro
                 </p>
-                <p>• <strong>Administrador:</strong> Visualiza, edita e consolida dívidas de todos os membros.</p>
-                <p>• <strong>Usuário Comum:</strong> Acessa exclusivamente as suas próprias dívidas.</p>
+                <p>• Apenas contas do Gmail autorizadas previamente pelos Administradores conseguem acessar a plataforma.</p>
             </div>
 
             <button onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all active:scale-[0.99] text-sm">
@@ -85,6 +84,9 @@
                     </button>
                     <button onclick="switchNavTab('reports')" id="tab-btn-reports" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
                         Relatórios & Gráficos
+                    </button>
+                    <button onclick="switchNavTab('users')" id="tab-btn-users" class="hidden px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                        Gerenciar Usuários
                     </button>
                 </nav>
 
@@ -291,6 +293,39 @@
                 </div>
             </section>
 
+            <!-- TELA 3: GERENCIAR USUÁRIOS E PERMISSÕES (ADMIN EXCLUSIVO) -->
+            <section id="view-users" class="hidden space-y-6">
+                <div class="bg-slate-800/80 border border-slate-700 p-6 rounded-2xl space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700 pb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="users" class="w-6 h-6 text-brand-400"></i>
+                                Controle de Acessos & Usuários Autorizados
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">Apenas contas do Gmail cadastradas nesta lista poderão logar no sistema.</p>
+                        </div>
+                        <button onclick="toggleModalNewUser(true)" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-brand-600/20">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            Cadastrar Novo Usuário
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400">
+                                    <th class="py-3 px-2">E-mail Cadastrado (Gmail)</th>
+                                    <th class="py-3 px-2">Perfil / Função</th>
+                                    <th class="py-3 px-2 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-700/50 text-xs">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- TELA DETALHE DA DÍVIDA SELECIONADA -->
             <section id="view-detail" class="hidden space-y-6">
                 <div class="flex items-center justify-between">
@@ -302,6 +337,39 @@
                 <div id="detail-content" class="bg-slate-800/80 border border-slate-700 p-6 rounded-2xl space-y-6"></div>
             </section>
         </main>
+    </div>
+
+    <!-- MODAL: CADASTRAR USUÁRIO (ADMIN) -->
+    <div id="modal-new-user" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-brand-500"></i>
+                    Autorizar Conta do Gmail
+                </h3>
+                <button onclick="toggleModalNewUser(false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="handleCreateUser(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">E-mail do Gmail *</label>
+                    <input type="email" id="user-email-input" required placeholder="usuario@gmail.com" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Perfil de Acesso *</label>
+                    <select id="user-role-input" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                        <option value="USER">🔒 Usuário Comum (Vê apenas suas dívidas)</option>
+                        <option value="ADMIN">⚡ Administrador (Acesso Total)</option>
+                    </select>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="toggleModalNewUser(false)" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-medium">Cancelar</button>
+                    <button type="submit" id="btn-save-user" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-lg shadow-brand-600/20">Autorizar E-mail</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL: NOVA DÍVIDA -->
@@ -354,7 +422,6 @@
                     </div>
                 </div>
 
-                <!-- CAMPO ADMINISTRATIVO: VINCULAR A QUAL E-MAIL? -->
                 <div id="field-assign-email" class="hidden pt-2 border-t border-slate-700">
                     <label class="block text-xs font-medium text-brand-400 mb-1">Atribuir Dívida ao E-mail (Admin):</label>
                     <input type="email" id="debt-assign-email" placeholder="usuario@exemplo.com" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none">
@@ -473,7 +540,7 @@
             getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
         import { 
-            getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc 
+            getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, getDoc, setDoc 
         } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         // CREDENCIAIS ATUALIZADAS DO PROJETO analise-financeira-5a07f
@@ -492,7 +559,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        const ADMIN_EMAILS = ["t.f.matheus96@gmail.com", "dayaneazevedo88@gmail.com"];
+        const MASTER_ADMIN_EMAILS = ["t.f.matheus96@gmail.com", "dayaneazevedo88@gmail.com"];
 
         const WELCOME_QUOTES = [
             '"O segredo da tranquilidade financeira é o planejamento diário."',
@@ -504,6 +571,7 @@
         let currentUser = null;
         let currentUserRole = "USER";
         let debtsList = [];
+        let systemUsersList = [];
         let selectedAdminUserFilter = "ALL";
         let currentDetailDebtId = null;
 
@@ -511,12 +579,35 @@
         let chartStatusInstance = null;
         let chartBarDebtsInstance = null;
 
-        // ESCUTAR ESTADO DE AUTENTICAÇÃO
-        onAuthStateChanged(auth, (user) => {
+        // ESCUTAR ESTADO DE AUTENTICAÇÃO COM VALIDAÇÃO DE WHITELIST DE E-MAILS
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                currentUser = user;
                 const userEmail = user.email.toLowerCase();
-                currentUserRole = ADMIN_EMAILS.includes(userEmail) ? "ADMIN" : "USER";
+
+                // Verificar se é Master Admin ou se o e-mail consta cadastrado no Firestore
+                let userRole = null;
+                if (MASTER_ADMIN_EMAILS.includes(userEmail)) {
+                    userRole = "ADMIN";
+                } else {
+                    try {
+                        const userDoc = await getDoc(doc(db, "app_users", userEmail));
+                        if (userDoc.exists()) {
+                            userRole = userDoc.data().role || "USER";
+                        }
+                    } catch (err) {
+                        console.error("Erro ao verificar cadastro do usuário:", err);
+                    }
+                }
+
+                // BLOQUEAR LOGIN CASO NÃO ESTEJA PRÉ-CADASTRADO
+                if (!userRole) {
+                    alert(`Acesso Não Autorizado!\n\nO e-mail "${userEmail}" não possui autorização prévia cadastrada no sistema. Solicite a inclusão a um Administrador.`);
+                    await signOut(auth);
+                    return;
+                }
+
+                currentUser = user;
+                currentUserRole = userRole;
 
                 const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Usuário';
                 document.getElementById('logged-user-name').innerText = user.displayName || user.email;
@@ -537,6 +628,13 @@
                     document.getElementById('admin-filter-bar').classList.remove('hidden');
                     document.getElementById('field-assign-email').classList.remove('hidden');
                     document.getElementById('edit-full-field-assign-email').classList.remove('hidden');
+                    document.getElementById('tab-btn-users').classList.remove('hidden');
+                    listenToFirestoreUsers();
+                } else {
+                    document.getElementById('admin-filter-bar').classList.add('hidden');
+                    document.getElementById('field-assign-email').classList.add('hidden');
+                    document.getElementById('edit-full-field-assign-email').classList.add('hidden');
+                    document.getElementById('tab-btn-users').classList.add('hidden');
                 }
 
                 document.getElementById('screen-login').classList.add('hidden');
@@ -562,15 +660,17 @@
 
         window.handleLogout = function() { signOut(auth); };
 
-        // TROCAR NAVEGAÇÃO ENTRE HOME E RELATÓRIOS
+        // NAVEGAÇÃO ENTRE ABAS
         window.switchNavTab = function(tabName) {
             currentDetailDebtId = null;
             document.getElementById('view-home').classList.add('hidden');
             document.getElementById('view-reports').classList.add('hidden');
+            document.getElementById('view-users').classList.add('hidden');
             document.getElementById('view-detail').classList.add('hidden');
 
             document.getElementById('tab-btn-home').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
             document.getElementById('tab-btn-reports').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+            document.getElementById('tab-btn-users').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
 
             if (tabName === 'home') {
                 document.getElementById('view-home').classList.remove('hidden');
@@ -580,7 +680,99 @@
                 document.getElementById('view-reports').classList.remove('hidden');
                 document.getElementById('tab-btn-reports').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-600 text-white shadow";
                 updateReportsView();
+            } else if (tabName === 'users') {
+                document.getElementById('view-users').classList.remove('hidden');
+                document.getElementById('tab-btn-users').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-600 text-white shadow";
+                renderUsersTable();
             }
+        };
+
+        // GESTÃO DE USUÁRIOS NO FIRESTORE
+        function listenToFirestoreUsers() {
+            onSnapshot(collection(db, "app_users"), (snapshot) => {
+                systemUsersList = snapshot.docs.map(d => ({ email: d.id, ...d.data() }));
+                renderUsersTable();
+            });
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            if (!tbody) return;
+
+            const allUsersSet = new Map();
+            MASTER_ADMIN_EMAILS.forEach(email => {
+                allUsersSet.set(email, { email: email, role: 'ADMIN', isMaster: true });
+            });
+
+            systemUsersList.forEach(u => {
+                if (!allUsersSet.has(u.email)) {
+                    allUsersSet.set(u.email, { email: u.email, role: u.role || 'USER', isMaster: false });
+                }
+            });
+
+            const rowsHtml = Array.from(allUsersSet.values()).map(u => `
+                <tr>
+                    <td class="py-3 px-2 font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="mail" class="w-4 h-4 text-brand-400"></i> ${u.email}
+                        ${u.isMaster ? `<span class="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded border border-amber-800">Fundador/Master</span>` : ''}
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${u.role === 'ADMIN' ? 'bg-brand-950 text-brand-300 border border-brand-800' : 'bg-slate-700 text-slate-300'}">
+                            ${u.role === 'ADMIN' ? '⚡ Administrador' : '🔒 Usuário Comum'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-2 text-right">
+                        ${!u.isMaster ? `
+                            <button onclick="deleteUserAuthorization('${u.email}')" class="text-rose-400 hover:bg-rose-950/40 p-1.5 rounded-lg border border-rose-800/50 text-xs flex items-center gap-1 ml-auto">
+                                <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Remover Acesso
+                            </button>
+                        ` : '<span class="text-slate-500 text-[11px] italic">Protegido</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            tbody.innerHTML = rowsHtml || `<tr><td colspan="3" class="py-4 text-center text-slate-500">Nenhum usuário cadastrado.</td></tr>`;
+            lucide.createIcons();
+        }
+
+        window.handleCreateUser = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-user');
+            btn.disabled = true;
+
+            const email = document.getElementById('user-email-input').value.trim().toLowerCase();
+            const role = document.getElementById('user-role-input').value;
+
+            try {
+                await setDoc(doc(db, "app_users", email), {
+                    role: role,
+                    createdBy: currentUser.email.toLowerCase(),
+                    createdAt: new Date().toISOString()
+                });
+
+                toggleModalNewUser(false);
+                document.getElementById('user-email-input').value = '';
+                showToast(`E-mail "${email}" autorizado com sucesso!`);
+            } catch (err) {
+                alert("Erro ao autorizar e-mail: " + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteUserAuthorization = async function(email) {
+            if (confirm(`Deseja remover a permissão de acesso da conta "${email}"? Ela não conseguirá mais entrar.`)) {
+                try {
+                    await deleteDoc(doc(db, "app_users", email));
+                    showToast("Permissão removida com sucesso!");
+                } catch (err) {
+                    alert("Erro ao remover usuário: " + err.message);
+                }
+            }
+        };
+
+        window.toggleModalNewUser = function(show) {
+            document.getElementById('modal-new-user').classList.toggle('hidden', !show);
         };
 
         // ESCUTAR DIVIDAS DO FIRESTORE EM TEMPO REAL
@@ -747,7 +939,6 @@
                 const paidCount = insts.filter(i => i.status === 'Pago').length;
                 const allInstallmentsPaid = insts.length > 0 && paidCount === insts.length;
                 
-                // CARTÃO DE CRÉDITO FLAG: Não vai para quitado se não houver parcelas ou se houver pendência
                 const isComplete = allInstallmentsPaid && (debt.category !== 'Cartão de Crédito' || dPending === 0);
 
                 totalPendingVal += dPending;
@@ -819,7 +1010,7 @@
             lucide.createIcons();
         }
 
-        // LÓGICA DOS RELATÓRIOS E GRÁFICOS
+        // RELATÓRIOS E GRÁFICOS
         window.updateReportsView = function() {
             const statusFilter = document.getElementById('rep-filter-status').value;
             const categoryFilter = document.getElementById('rep-filter-category').value;
@@ -974,7 +1165,7 @@
             html2pdf().set(opt).from(element).save();
         };
 
-        // DETALHES DA DÍVIDA COM BOTÃO DE EDITAR COMPLETO
+        // DETALHES DA DÍVIDA
         function renderDebtDetailScreen(id) {
             const container = document.getElementById('detail-content');
             const debt = debtsList.find(d => d.id === id);
@@ -1068,7 +1259,6 @@
             lucide.createIcons();
         }
 
-        // ABRIR MODAL PARA EDIÇÃO COMPLETA DE DÍVIDA
         window.openModalEditFullDebt = function(debtId) {
             const debt = debtsList.find(d => d.id === debtId);
             if (!debt) return;
@@ -1089,7 +1279,6 @@
             toggleModalEditFullDebt(true);
         };
 
-        // SALVAR EDIÇÃO COMPLETA DA DÍVIDA
         window.handleSaveFullDebtEdit = async function(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-save-full-debt');
@@ -1128,8 +1317,6 @@
 
                 let dateIso = `${y}-${String(m + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
                 let instAmount = i === 0 ? Math.round((baseAmount + remainder) * 100) / 100 : baseAmount;
-                
-                // Mantém status de pago caso a parcela já existisse previamente
                 let prevStatus = existingInsts[i] ? existingInsts[i].status : 'Pendente';
 
                 newInstallments.push({
@@ -1239,6 +1426,7 @@
             currentDetailDebtId = id;
             document.getElementById('view-home').classList.add('hidden');
             document.getElementById('view-reports').classList.add('hidden');
+            document.getElementById('view-users').classList.add('hidden');
             document.getElementById('view-detail').classList.remove('hidden');
             renderDebtDetailScreen(id);
         };
