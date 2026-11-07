@@ -323,7 +323,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Categoria *</label>
-                    <select id="debt-category" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    <select id="debt-category" onchange="handleCategoryChange(this.value, 'create')" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
                         <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
                         <option value="Empréstimo">🏦 Empréstimo</option>
                         <option value="Financiamento">🚗 Financiamento</option>
@@ -335,11 +335,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Valor Total (R$) *</label>
-                        <input type="number" step="0.01" id="debt-total" oninput="calculateInstallmentsPreview()" required placeholder="1200.00" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                        <input type="number" step="0.01" id="debt-total" oninput="calculateInstallmentsPreview('create')" required placeholder="1200.00" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Qtd. de Parcelas *</label>
-                        <input type="number" id="debt-count" oninput="calculateInstallmentsPreview()" required min="1" max="240" value="12" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                        <input type="number" id="debt-count" oninput="calculateInstallmentsPreview('create')" required min="1" max="240" value="12" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
                     </div>
                 </div>
 
@@ -363,6 +363,71 @@
                 <div class="pt-3 flex justify-end gap-2">
                     <button type="button" onclick="toggleModalNewDebt(false)" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-medium">Cancelar</button>
                     <button type="submit" id="btn-save-debt" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-lg shadow-brand-600/20">Salvar no Firestore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR DÍVIDA COMPLETA -->
+    <div id="modal-edit-full-debt" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-brand-500"></i>
+                    Editar Informações da Dívida
+                </h3>
+                <button onclick="toggleModalEditFullDebt(false)" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="handleSaveFullDebtEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-full-debt-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Dívida / Credor *</label>
+                    <input type="text" id="edit-full-debt-name" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Categoria *</label>
+                    <select id="edit-full-debt-category" onchange="handleCategoryChange(this.value, 'edit')" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                        <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+                        <option value="Empréstimo">🏦 Empréstimo</option>
+                        <option value="Financiamento">🚗 Financiamento</option>
+                        <option value="Contas Fixas">📄 Contas Fixas</option>
+                        <option value="Dinheiro Emprestado">🤝 Dinheiro Emprestado</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Valor Total (R$) *</label>
+                        <input type="number" step="0.01" id="edit-full-debt-total" oninput="calculateInstallmentsPreview('edit')" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Qtd. de Parcelas *</label>
+                        <input type="number" id="edit-full-debt-count" oninput="calculateInstallmentsPreview('edit')" required min="1" max="240" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Valor por Parcela (Calculado)</label>
+                        <input type="number" step="0.01" id="edit-full-debt-inst-value" required readonly class="w-full p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-emerald-400 font-bold text-sm outline-none cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">1º Vencimento *</label>
+                        <input type="date" id="edit-full-debt-first-date" required class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div id="edit-full-field-assign-email" class="hidden pt-2 border-t border-slate-700">
+                    <label class="block text-xs font-medium text-brand-400 mb-1">Atribuir Dívida ao E-mail (Admin):</label>
+                    <input type="email" id="edit-full-debt-assign-email" placeholder="usuario@exemplo.com" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm outline-none">
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="toggleModalEditFullDebt(false)" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-medium">Cancelar</button>
+                    <button type="submit" id="btn-save-full-debt" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-lg shadow-brand-600/20">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -471,6 +536,7 @@
                 if (currentUserRole === "ADMIN") {
                     document.getElementById('admin-filter-bar').classList.remove('hidden');
                     document.getElementById('field-assign-email').classList.remove('hidden');
+                    document.getElementById('edit-full-field-assign-email').classList.remove('hidden');
                 }
 
                 document.getElementById('screen-login').classList.add('hidden');
@@ -552,13 +618,24 @@
             renderDashboard();
         };
 
-        window.calculateInstallmentsPreview = function() {
-            const total = parseFloat(document.getElementById('debt-total').value) || 0;
-            const count = parseInt(document.getElementById('debt-count').value) || 1;
-            if (total > 0 && count > 0) {
-                document.getElementById('debt-inst-value').value = (total / count).toFixed(2);
+        window.handleCategoryChange = function(cat, mode) {
+            const prefix = mode === 'edit' ? 'edit-full-debt-' : 'debt-';
+            const totalInput = document.getElementById(`${prefix}total`);
+            if (cat === 'Cartão de Crédito') {
+                totalInput.value = totalInput.value || 0;
+            }
+            calculateInstallmentsPreview(mode);
+        };
+
+        window.calculateInstallmentsPreview = function(mode) {
+            const prefix = mode === 'edit' ? 'edit-full-debt-' : 'debt-';
+            const total = parseFloat(document.getElementById(`${prefix}total`).value) || 0;
+            const count = parseInt(document.getElementById(`${prefix}count`).value) || 1;
+            const instInput = document.getElementById(`${prefix}inst-value`);
+            if (count > 0) {
+                instInput.value = (total / count).toFixed(2);
             } else {
-                document.getElementById('debt-inst-value').value = '';
+                instInput.value = '';
             }
         };
 
@@ -570,8 +647,8 @@
 
             const name = document.getElementById('debt-name').value.trim();
             const category = document.getElementById('debt-category').value;
-            const total = parseFloat(document.getElementById('debt-total').value);
-            const count = parseInt(document.getElementById('debt-count').value);
+            const total = parseFloat(document.getElementById('debt-total').value) || 0;
+            const count = parseInt(document.getElementById('debt-count').value) || 1;
             const startDateStr = document.getElementById('debt-first-date').value;
             
             const assignedEmailInput = document.getElementById('debt-assign-email').value.trim().toLowerCase();
@@ -668,7 +745,10 @@
                 const dPaid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
                 const dPending = dTotal - dPaid;
                 const paidCount = insts.filter(i => i.status === 'Pago').length;
-                const isComplete = dPending === 0 && insts.length > 0;
+                const allInstallmentsPaid = insts.length > 0 && paidCount === insts.length;
+                
+                // CARTÃO DE CRÉDITO FLAG: Não vai para quitado se não houver parcelas ou se houver pendência
+                const isComplete = allInstallmentsPaid && (debt.category !== 'Cartão de Crédito' || dPending === 0);
 
                 totalPendingVal += dPending;
                 totalPaidVal += dPaid;
@@ -769,7 +849,8 @@
                 const dTotal = insts.reduce((a, b) => a + b.amount, 0);
                 const dPaid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
                 const dPending = dTotal - dPaid;
-                const isComplete = dPending === 0;
+                const allPaid = insts.length > 0 && insts.every(i => i.status === 'Pago');
+                const isComplete = allPaid && (debt.category !== 'Cartão de Crédito' || dPending === 0);
 
                 if (statusFilter === 'PENDING' && isComplete) return;
                 if (statusFilter === 'PAID' && !isComplete) return;
@@ -893,7 +974,7 @@
             html2pdf().set(opt).from(element).save();
         };
 
-        // DETALHES DA DÍVIDA
+        // DETALHES DA DÍVIDA COM BOTÃO DE EDITAR COMPLETO
         function renderDebtDetailScreen(id) {
             const container = document.getElementById('detail-content');
             const debt = debtsList.find(d => d.id === id);
@@ -915,9 +996,12 @@
                         </div>
                         <h2 class="text-2xl font-bold text-white mt-2">${debt.name}</h2>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <button onclick="openModalEditFullDebt('${debt.id}')" class="bg-brand-600 hover:bg-brand-700 text-white p-2 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-all">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Editar Dívida
+                        </button>
                         <button onclick="deleteDebt('${debt.id}')" class="text-rose-400 hover:bg-rose-950/40 p-2 rounded-xl border border-rose-800/50 text-xs font-semibold flex items-center gap-1.5">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Dívida
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
                         </button>
                     </div>
                 </div>
@@ -983,6 +1067,100 @@
 
             lucide.createIcons();
         }
+
+        // ABRIR MODAL PARA EDIÇÃO COMPLETA DE DÍVIDA
+        window.openModalEditFullDebt = function(debtId) {
+            const debt = debtsList.find(d => d.id === debtId);
+            if (!debt) return;
+
+            document.getElementById('edit-full-debt-id').value = debtId;
+            document.getElementById('edit-full-debt-name').value = debt.name;
+            document.getElementById('edit-full-debt-category').value = debt.category;
+            document.getElementById('edit-full-debt-total').value = debt.totalAmount;
+            document.getElementById('edit-full-debt-count').value = debt.installmentsCount || debt.installments.length;
+
+            const firstDate = (debt.installments && debt.installments.length > 0) ? debt.installments[0].dueDate : new Date().toISOString().split('T')[0];
+            document.getElementById('edit-full-debt-first-date').value = firstDate;
+
+            const ownerEmail = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
+            document.getElementById('edit-full-debt-assign-email').value = ownerEmail;
+
+            calculateInstallmentsPreview('edit');
+            toggleModalEditFullDebt(true);
+        };
+
+        // SALVAR EDIÇÃO COMPLETA DA DÍVIDA
+        window.handleSaveFullDebtEdit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-full-debt');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const debtId = document.getElementById('edit-full-debt-id').value;
+            const name = document.getElementById('edit-full-debt-name').value.trim();
+            const category = document.getElementById('edit-full-debt-category').value;
+            const total = parseFloat(document.getElementById('edit-full-debt-total').value) || 0;
+            const count = parseInt(document.getElementById('edit-full-debt-count').value) || 1;
+            const startDateStr = document.getElementById('edit-full-debt-first-date').value;
+            const assignedEmailInput = document.getElementById('edit-full-debt-assign-email').value.trim().toLowerCase();
+
+            const debt = debtsList.find(d => d.id === debtId);
+            if (!debt) return;
+
+            const ownerEmail = assignedEmailInput || debt.allowedEmails[0] || debt.createdBy;
+
+            const parts = startDateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+
+            const baseAmount = Math.floor((total / count) * 100) / 100;
+            const remainder = Math.round((total - (baseAmount * count)) * 100) / 100;
+
+            const existingInsts = debt.installments || [];
+            const newInstallments = [];
+
+            for (let i = 0; i < count; i++) {
+                let y = year + Math.floor((month + i) / 12);
+                let m = (month + i) % 12;
+                let daysInM = new Date(y, m + 1, 0).getDate();
+                let actualDay = Math.min(day, daysInM);
+
+                let dateIso = `${y}-${String(m + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+                let instAmount = i === 0 ? Math.round((baseAmount + remainder) * 100) / 100 : baseAmount;
+                
+                // Mantém status de pago caso a parcela já existisse previamente
+                let prevStatus = existingInsts[i] ? existingInsts[i].status : 'Pendente';
+
+                newInstallments.push({
+                    number: i + 1,
+                    dueDate: dateIso,
+                    amount: instAmount,
+                    status: prevStatus
+                });
+            }
+
+            try {
+                await updateDoc(doc(db, "debts_tracker", debtId), {
+                    name: name,
+                    category: category,
+                    totalAmount: total,
+                    installmentsCount: count,
+                    installments: newInstallments,
+                    allowedEmails: [ownerEmail],
+                    updatedAt: new Date().toISOString()
+                });
+
+                toggleModalEditFullDebt(false);
+                showToast("Dívida atualizada com sucesso!");
+                renderDebtDetailScreen(debtId);
+            } catch (err) {
+                alert("Erro ao salvar alterações da dívida: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Salvar Alterações";
+            }
+        };
 
         window.toggleInstallmentStatus = async function(debtId, instIndex) {
             const debt = debtsList.find(d => d.id === debtId);
@@ -1074,6 +1252,10 @@
 
         window.toggleModalNewDebt = function(show) {
             document.getElementById('modal-new-debt').classList.toggle('hidden', !show);
+        };
+
+        window.toggleModalEditFullDebt = function(show) {
+            document.getElementById('modal-edit-full-debt').classList.toggle('hidden', !show);
         };
 
         window.toggleModalEditInstallment = function(show) {
