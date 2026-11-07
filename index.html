@@ -411,13 +411,15 @@
             getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc 
         } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
+        // CREDENCIAIS ATUALIZADAS DO PROJETO analise-financeira-5a07f
         const firebaseConfig = {
-            apiKey: "AIzaSyCMxu8uksx9Ws0Ffmt5V2nBJ6KH1tZJn4U",
-            authDomain: "financontrol-dividas.firebaseapp.com",
-            projectId: "financontrol-dividas",
-            storageBucket: "financontrol-dividas.firebasestorage.app",
-            messagingSenderId: "379799971734",
-            appId: "1:379799971734:web:065910ec81f2eaaa1cdfb7"
+            apiKey: "AIzaSyDnp8SXCzWcCxvRpPVc5qeAyeMjD4b8W1g",
+            authDomain: "analise-financeira-5a07f.firebaseapp.com",
+            projectId: "analise-financeira-5a07f",
+            storageBucket: "analise-financeira-5a07f.firebasestorage.app",
+            messagingSenderId: "659615490472",
+            appId: "1:659615490472:web:ccbc3adab4aa44356ffd9d",
+            measurementId: "G-C37CYYQYE4"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -455,7 +457,6 @@
                 document.getElementById('logged-user-name').innerText = user.displayName || user.email;
                 document.getElementById('welcome-user-name').innerText = firstName;
                 
-                // Escolhe frase motivacional aleatória
                 const randomQuote = WELCOME_QUOTES[Math.floor(Math.random() * WELCOME_QUOTES.length)];
                 document.getElementById('welcome-quote').innerText = randomQuote;
 
@@ -806,7 +807,6 @@
         };
 
         function renderReportCharts(catMap, paid, pending, barLabels, barPaid, barPending) {
-            // Chart Categoria
             const ctxCat = document.getElementById('chart-category');
             if (ctxCat) {
                 if (chartCategoryInstance) chartCategoryInstance.destroy();
@@ -824,7 +824,6 @@
                 });
             }
 
-            // Chart Status
             const ctxStatus = document.getElementById('chart-status');
             if (ctxStatus) {
                 if (chartStatusInstance) chartStatusInstance.destroy();
@@ -842,7 +841,6 @@
                 });
             }
 
-            // Chart Barras
             const ctxBar = document.getElementById('chart-bar-debts');
             if (ctxBar) {
                 if (chartBarDebtsInstance) chartBarDebtsInstance.destroy();
