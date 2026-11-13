@@ -590,7 +590,7 @@
         // ESCUTAR ESTADO DE AUTENTICAÇÃO COM VALIDAÇÃO DE WHITELIST DE E-MAILS
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userEmail = user.email.toLowerCase();
+                const userEmail = user.email.trim().toLowerCase();
 
                 // Verificar se é Master Admin ou se o e-mail consta cadastrado no Firestore
                 let userRole = null;
@@ -754,7 +754,7 @@
             try {
                 await setDoc(doc(db, "app_users", email), {
                     role: role,
-                    createdBy: currentUser.email.toLowerCase(),
+                    createdBy: currentUser.email.trim().toLowerCase(),
                     createdAt: new Date().toISOString()
                 });
 
@@ -797,12 +797,19 @@
             });
         }
 
+        // CORRIGIDO: Lista no seletor apenas os responsáveis efetivos (allowedEmails) normalizados
         function updateAdminUserSelector() {
             const selector = document.getElementById('admin-user-selector');
             const emailsSet = new Set();
+
             debtsList.forEach(d => {
-                if (d.createdBy) emailsSet.add(d.createdBy.toLowerCase());
-                if (d.allowedEmails) d.allowedEmails.forEach(e => emailsSet.add(e.toLowerCase()));
+                const owners = (d.allowedEmails && d.allowedEmails.length > 0)
+                    ? d.allowedEmails
+                    : (d.createdBy ? [d.createdBy] : []);
+
+                owners.forEach(e => {
+                    if (e) emailsSet.add(e.trim().toLowerCase());
+                });
             });
 
             let optionsHtml = `<option value="ALL">🌐 Ver Todas as Dívidas de Todos</option>`;
@@ -852,7 +859,7 @@
             const startDateStr = document.getElementById('debt-first-date').value;
             
             const assignedEmailInput = document.getElementById('debt-assign-email').value.trim().toLowerCase();
-            const ownerEmail = assignedEmailInput || currentUser.email.toLowerCase();
+            const ownerEmail = assignedEmailInput || currentUser.email.trim().toLowerCase();
 
             const parts = startDateStr.split('-');
             const year = parseInt(parts[0], 10);
@@ -886,7 +893,7 @@
                 totalAmount: total,
                 installmentsCount: count,
                 installments: installments,
-                createdBy: currentUser.email.toLowerCase(),
+                createdBy: currentUser.email.trim().toLowerCase(),
                 allowedEmails: [ownerEmail],
                 createdAt: new Date().toISOString()
             };
@@ -908,17 +915,21 @@
             }
         };
 
+        // CORRIGIDO: Filtra exclusivamente pelos responsáveis (allowedEmails) normalizados
         function getVisibleDebts() {
             return debtsList.filter(d => {
-                const myEmail = currentUser.email.toLowerCase();
-                const allowed = d.allowedEmails || [d.createdBy];
+                const myEmail = currentUser.email.trim().toLowerCase();
+                
+                const owners = (d.allowedEmails && d.allowedEmails.length > 0)
+                    ? d.allowedEmails.map(e => e.trim().toLowerCase())
+                    : (d.createdBy ? [d.createdBy.trim().toLowerCase()] : []);
 
                 if (currentUserRole !== "ADMIN") {
-                    return allowed.includes(myEmail) || d.createdBy === myEmail;
+                    return owners.includes(myEmail);
                 }
 
                 if (selectedAdminUserFilter !== "ALL") {
-                    return allowed.includes(selectedAdminUserFilter) || d.createdBy === selectedAdminUserFilter;
+                    return owners.includes(selectedAdminUserFilter.trim().toLowerCase());
                 }
 
                 return true;
@@ -1321,7 +1332,7 @@
             const debt = debtsList.find(d => d.id === debtId);
             if (!debt) return;
 
-            const ownerEmail = assignedEmailInput || debt.allowedEmails[0] || debt.createdBy;
+            const ownerEmail = assignedEmailInput || (debt.allowedEmails && debt.allowedEmails[0] ? debt.allowedEmails[0].trim().toLowerCase() : debt.createdBy.trim().toLowerCase());
 
             const parts = startDateStr.split('-');
             const year = parseInt(parts[0], 10);
