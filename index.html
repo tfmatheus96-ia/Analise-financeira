@@ -147,10 +147,14 @@
                 </div>
 
                 <!-- CARDS DE RESUMO -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div class="bg-slate-800/60 border border-brand-500/40 p-5 rounded-2xl">
                         <span class="text-xs font-medium text-brand-400 uppercase tracking-wider block mb-1">Total no Mês Atual</span>
                         <p id="stat-total-month" class="text-2xl font-bold text-white">R$ 0,00</p>
+                    </div>
+                    <div class="bg-slate-800/60 border border-amber-500/40 p-5 rounded-2xl">
+                        <span class="text-xs font-medium text-amber-400 uppercase tracking-wider block mb-1">Pendente no Mês</span>
+                        <p id="stat-pending-month" class="text-2xl font-bold text-amber-400">R$ 0,00</p>
                     </div>
                     <div class="bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl">
                         <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">Total em Aberto</span>
@@ -931,6 +935,7 @@
             const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
             let totalMonthVal = 0;
+            let pendingMonthVal = 0;
             let totalPendingVal = 0;
             let totalPaidVal = 0;
             let countPending = 0;
@@ -941,11 +946,15 @@
 
             filteredDebts.forEach(debt => {
                 const insts = debt.installments || [];
+                const monthInsts = insts.filter(i => i.dueDate && i.dueDate.startsWith(currentYearMonth));
                 
-                const dMonth = insts
-                    .filter(i => i.dueDate && i.dueDate.startsWith(currentYearMonth))
+                const dMonth = monthInsts.reduce((a, b) => a + b.amount, 0);
+                const dMonthPending = monthInsts
+                    .filter(i => i.status === 'Pendente')
                     .reduce((a, b) => a + b.amount, 0);
+
                 totalMonthVal += dMonth;
+                pendingMonthVal += dMonthPending;
 
                 const dTotal = insts.reduce((a, b) => a + b.amount, 0);
                 const dPaid = insts.filter(i => i.status === 'Pago').reduce((a, b) => a + b.amount, 0);
@@ -1016,6 +1025,7 @@
             paidGrid.innerHTML = paidCards.join('') || `<div class="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-800/40 rounded-2xl border border-slate-700/50">Nenhuma dívida quitada.</div>`;
 
             document.getElementById('stat-total-month').innerText = `R$ ${totalMonthVal.toFixed(2)}`;
+            document.getElementById('stat-pending-month').innerText = `R$ ${pendingMonthVal.toFixed(2)}`;
             document.getElementById('stat-total-pending').innerText = `R$ ${totalPendingVal.toFixed(2)}`;
             document.getElementById('stat-total-paid').innerText = `R$ ${totalPaidVal.toFixed(2)}`;
             document.getElementById('stat-total-count').innerText = filteredDebts.length;
