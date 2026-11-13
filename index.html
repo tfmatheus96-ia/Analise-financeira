@@ -587,12 +587,63 @@
         let chartStatusInstance = null;
         let chartBarDebtsInstance = null;
 
+        // HELPER: Calcula urgência de vencimento (4-3 dias = Amarelo piscando | <= 2 dias = Vermelho piscando)
+        function getDueUrgency(dueDateStr, status) {
+            if (!dueDateStr || status === 'Pago') {
+                return { level: 'normal', label: '', cardBorder: 'border-slate-700/70 hover:border-brand-500/80', boxClass: 'bg-slate-900/60 border-slate-700/40', dateClass: 'text-slate-200', badgeClass: '' };
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const [y, m, d] = dueDateStr.split('-').map(Number);
+            const dueDate = new Date(y, m - 1, d);
+            dueDate.setHours(0, 0, 0, 0);
+
+            const diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 2) {
+                let label = 'Vence hoje!';
+                if (diffDays < 0) label = `Atrasada (${Math.abs(diffDays)}d)!`;
+                else if (diffDays === 1) label = 'Vence amanhã!';
+                else if (diffDays === 2) label = 'Vence em 2 dias!';
+
+                return {
+                    level: 'critical',
+                    label: label,
+                    cardBorder: 'border-rose-500 shadow-lg shadow-rose-500/20',
+                    boxClass: 'bg-rose-950/60 border-rose-500/80 animate-pulse',
+                    dateClass: 'text-rose-400 font-extrabold',
+                    badgeClass: 'bg-rose-600 text-white animate-pulse'
+                };
+            }
+
+            if (diffDays >= 3 && diffDays <= 4) {
+                return {
+                    level: 'warning',
+                    label: `Vence em ${diffDays} dias`,
+                    cardBorder: 'border-amber-400/80 shadow-lg shadow-amber-500/15',
+                    boxClass: 'bg-amber-950/50 border-amber-400/80 animate-pulse',
+                    dateClass: 'text-amber-300 font-extrabold',
+                    badgeClass: 'bg-amber-500 text-slate-950 animate-pulse'
+                };
+            }
+
+            return {
+                level: 'normal',
+                label: '',
+                cardBorder: 'border-slate-700/70 hover:border-brand-500/80',
+                boxClass: 'bg-slate-900/60 border-slate-700/40',
+                dateClass: 'text-slate-200',
+                badgeClass: ''
+            };
+        }
+
         // ESCUTAR ESTADO DE AUTENTICAÇÃO COM VALIDAÇÃO DE WHITELIST DE E-MAILS
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userEmail = user.email.trim().toLowerCase();
 
-                // Verificar se é Master Admin ou se o e-mail consta cadastrado no Firestore
                 let userRole = null;
                 if (MASTER_ADMIN_EMAILS.includes(userEmail)) {
                     userRole = "ADMIN";
@@ -607,7 +658,6 @@
                     }
                 }
 
-                // BLOQUEAR LOGIN CASO NÃO ESTEJA PRÉ-CADASTRADO
                 if (!userRole) {
                     alert(`Acesso Não Autorizado!\n\nO e-mail "${userEmail}" não possui autorização prévia cadastrada no sistema. Solicite a inclusão a um Administrador.`);
                     await signOut(auth);
@@ -657,7 +707,6 @@
             }
         });
 
-        // LOGIN COM O GOOGLE
         window.handleGoogleLogin = async function() {
             try {
                 await signInWithPopup(auth, provider);
@@ -668,7 +717,6 @@
 
         window.handleLogout = function() { signOut(auth); };
 
-        // NAVEGAÇÃO ENTRE ABAS
         window.switchNavTab = function(tabName) {
             currentDetailDebtId = null;
             document.getElementById('view-home').classList.add('hidden');
@@ -695,7 +743,6 @@
             }
         };
 
-        // GESTÃO DE USUÁRIOS NO FIRESTORE
         function listenToFirestoreUsers() {
             onSnapshot(collection(db, "app_users"), (snapshot) => {
                 systemUsersList = snapshot.docs.map(d => ({ email: d.id, ...d.data() }));
@@ -783,7 +830,6 @@
             document.getElementById('modal-new-user').classList.toggle('hidden', !show);
         };
 
-        // ESCUTAR DIVIDAS DO FIRESTORE EM TEMPO REAL
         function listenToFirestoreDebts() {
             onSnapshot(collection(db, "debts_tracker"), (snapshot) => {
                 debtsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -797,7 +843,6 @@
             });
         }
 
-        // CORRIGIDO: Lista no seletor apenas os responsáveis efetivos (allowedEmails) normalizados
         function updateAdminUserSelector() {
             const selector = document.getElementById('admin-user-selector');
             const emailsSet = new Set();
@@ -915,7 +960,6 @@
             }
         };
 
-        // CORRIGIDO: Filtra exclusivamente pelos responsáveis (allowedEmails) normalizados
         function getVisibleDebts() {
             return debtsList.filter(d => {
                 const myEmail = currentUser.email.trim().toLowerCase();
@@ -984,27 +1028,31 @@
                 const nextPending = insts.find(i => i.status === 'Pendente');
                 const ownerDisplay = (debt.allowedEmails && debt.allowedEmails.length > 0) ? debt.allowedEmails[0] : debt.createdBy;
 
+                // Verifica urgência da próxima parcela pendente
+                const urgency = getDueUrgency(nextPending ? nextPending.dueDate : null, isComplete ? 'Pago' : 'Pendente');
+
                 const cardHtml = `
-                    <div onclick="openDebtDetail('${debt.id}')" class="bg-slate-800/80 border border-slate-700/70 hover:border-brand-500/80 p-5 rounded-2xl cursor-pointer transition-all space-y-4 group">
-                        <div class="flex items-start justify-between">
+                    <div onclick="openDebtDetail('${debt.id}')" class="bg-slate-800/80 border ${urgency.cardBorder} p-5 rounded-2xl cursor-pointer transition-all space-y-4 group">
+                        <div class="flex items-start justify-between gap-2">
                             <div>
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-700 text-slate-300">
                                         ${debt.category}
                                     </span>
                                     ${currentUserRole === 'ADMIN' ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-950 text-brand-300 border border-brand-800">👤 ${ownerDisplay}</span>` : ''}
+                                    ${urgency.label ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${urgency.badgeClass}">⚠️ ${urgency.label}</span>` : ''}
                                 </div>
                                 <h3 class="font-bold text-white text-base mt-1.5 group-hover:text-brand-400 transition-colors">${debt.name}</h3>
                             </div>
-                            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
                                 ${isComplete ? 'Quitada' : `${paidCount}/${insts.length} Pagas`}
                             </span>
                         </div>
 
-                        <div class="bg-slate-900/60 p-3 rounded-xl flex justify-between items-center text-xs border border-slate-700/40">
+                        <div class="${urgency.boxClass} p-3 rounded-xl flex justify-between items-center text-xs border">
                             <div>
                                 <span class="text-slate-400 block text-[11px]">Próximo Vencimento</span>
-                                <strong class="text-slate-200">${nextPending ? nextPending.dueDate.split('-').reverse().join('/') : 'Concluído'}</strong>
+                                <strong class="${urgency.dateClass}">${nextPending ? nextPending.dueDate.split('-').reverse().join('/') : 'Concluído'}</strong>
                             </div>
                             <div class="text-right">
                                 <span class="text-slate-400 block text-[11px]">Valor Parcela</span>
@@ -1266,10 +1314,17 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50 text-sm">
-                                ${insts.map((inst, idx) => `
-                                    <tr>
+                                ${insts.map((inst, idx) => {
+                                    const instUrgency = getDueUrgency(inst.dueDate, inst.status);
+                                    return `
+                                    <tr class="${instUrgency.level === 'critical' ? 'bg-rose-950/30' : instUrgency.level === 'warning' ? 'bg-amber-950/25' : ''}">
                                         <td class="py-3 px-2 font-bold text-slate-200">${inst.number}ª Parcela</td>
-                                        <td class="py-3 px-2 text-slate-300 font-medium">${inst.dueDate.split('-').reverse().join('/')}</td>
+                                        <td class="py-3 px-2 font-medium ${instUrgency.dateClass}">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span>${inst.dueDate.split('-').reverse().join('/')}</span>
+                                                ${instUrgency.label ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${instUrgency.badgeClass}">${instUrgency.label}</span>` : ''}
+                                            </div>
+                                        </td>
                                         <td class="py-3 px-2 font-semibold text-emerald-400">R$ ${inst.amount.toFixed(2)}</td>
                                         <td class="py-3 px-2">
                                             <span class="px-2.5 py-1 rounded-full text-xs font-bold ${inst.status === 'Pago' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
@@ -1285,7 +1340,7 @@
                                             </button>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                `}).join('')}
                             </tbody>
                         </table>
                     </div>
